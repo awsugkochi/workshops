@@ -1,5 +1,7 @@
 # Create EC2 Instance with Ubuntu 22.04 in Mumbai Region with Public IP
 
+# Part 1: Provision Instance
+
 ## 1. Login to AWS Console
    - Open your web browser and go to the [AWS Management Console](https://aws.amazon.com/).
    - Sign in with your AWS account credentials.
@@ -55,3 +57,104 @@
      ssh -i your-key.pem ubuntu@your-instance-ip
      ```
      Replace `your-key.pem` with the path to your private key file and `your-instance-ip` with the public IP address of your instance.
+
+
+## 2.1 Install Nginx, PHP-FPM, and MySQL Server
+   - Run the following commands on your EC2 instance to install Nginx, PHP-FPM, and MySQL Server:
+
+     ```bash
+     # Update package list
+     sudo apt update
+
+     # Install Nginx
+     sudo apt install nginx
+
+     # Install PHP and required extensions
+     sudo apt install php-fpm php-mysql php-curl php-gd php-mbstring php-xml php-xmlrpc php-soap php-intl php-zip
+
+     # Install MySQL Server
+     sudo apt install mysql-server
+     ```
+
+## 2.2 Configure MySQL for WordPress
+   - Set up a MySQL database and user for WordPress:
+
+     ```bash
+     # Access MySQL
+     sudo mysql
+
+     # Create a new database
+     CREATE DATABASE wordpress;
+
+     # Create a new user and grant privileges
+     CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY 'your_password';
+     GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress_user'@'localhost';
+     FLUSH PRIVILEGES;
+
+     # Exit MySQL
+     EXIT;
+     ```
+
+## 2.3 Install WordPress
+   - Download and configure WordPress:
+
+     ```bash
+     # Download and extract WordPress
+     cd /var/www/html
+     sudo wget https://wordpress.org/latest.tar.gz
+     sudo tar -xvzf latest.tar.gz
+     sudo mv wordpress/* .
+     sudo rm -rf wordpress latest.tar.gz
+
+     # Set correct permissions
+     sudo chown -R www-data:www-data /var/www/html
+     sudo chmod -R 755 /var/www/html
+     ```
+
+## 2.4 Configure Nginx for WordPress
+   - Create an Nginx server block configuration for WordPress:
+
+     ```bash
+     # Create a new configuration file
+     sudo nano /etc/nginx/sites-available/wordpress
+
+     # Add the following configuration, replacing example.com with your domain or IP
+     server {
+         listen 80;
+         server_name example.com;
+
+         root /var/www/html;
+         index index.php index.html index.htm;
+
+         location / {
+             try_files $uri $uri/ /index.php?$args;
+         }
+
+         location ~ \.php$ {
+             include snippets/fastcgi-php.conf;
+             fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+             fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+             include fastcgi_params;
+         }
+
+         location = /favicon.ico { log_not_found off; access_log off; }
+         location = /robots.txt { log_not_found off; access_log off; }
+
+         error_page 404 /index.php;
+     }
+
+     # Create a symbolic link to enable the site
+     sudo ln -s /etc/nginx/sites-available/wordpress /etc/nginx/sites-enabled/
+
+     # Test Nginx configuration
+     sudo nginx -t
+
+     # Reload Nginx
+     sudo systemctl reload nginx
+     ```
+
+## 2.5 Access WordPress via Public IP
+   - Open your web browser and enter the public IP address of your instance.
+   - Follow the on-screen instructions to complete the WordPress installation.
+
+Now, you have successfully provisioned an EC2 instance and deployed WordPress with Nginx, PHP-FPM, and MySQL.
