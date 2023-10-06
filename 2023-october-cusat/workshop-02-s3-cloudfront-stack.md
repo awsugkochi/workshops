@@ -67,7 +67,7 @@
    - Under the 'Permissions' tab, click on 'Bucket Policy'.
    - Add the following policy to make the bucket contents publicly readable. Make sure to replace `YOUR_BUCKET_NAME` with the actual name of your S3 bucket:
 
-    ```json
+```json
 
         {
             "Version": "2012-10-17",
@@ -81,7 +81,7 @@
                 }
             ]
         }
-
+```
 ### **Part 2: Setting up CloudFront Distribution:**
 
 #### 7. Navigate to CloudFront:
